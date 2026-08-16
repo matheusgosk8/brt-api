@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import { produtos, cupons } from '../db/schema';
-import { getDb, getPool } from '../db';
+import { produtos, cupons } from '../db/schemas';
+import { getDb, closeDb } from '../db';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -10,12 +10,14 @@ type ProdutoSeed = {
   id: string;
   descricaoProduto: string;
   quantidadeEstoque: number;
+  /** Centavos */
   precoLiquido: number;
 };
 
 type CupomSeed = {
   id: string;
   codigoCupom: string;
+  /** Pontos percentuais (10 = 10%) */
   percentualDesconto: number;
 };
 
@@ -37,7 +39,7 @@ async function main() {
         id: p.id,
         descricaoProduto: p.descricaoProduto,
         quantidadeEstoque: p.quantidadeEstoque,
-        precoLiquido: p.precoLiquido.toFixed(2),
+        precoLiquido: p.precoLiquido,
       })),
     )
     .onConflictDoNothing({ target: produtos.id });
@@ -48,21 +50,19 @@ async function main() {
       cuponsSeed.map((c) => ({
         id: c.id,
         codigoCupom: c.codigoCupom,
-        percentualDesconto: c.percentualDesconto.toFixed(2),
+        percentualDesconto: c.percentualDesconto,
       })),
     )
     .onConflictDoNothing({ target: cupons.id });
 
-  console.log(
-    `Seed OK: ${produtosSeed.length} produtos, ${cuponsSeed.length} cupons.`,
-  );
-  await getPool().end();
+  console.log(`Seed OK: ${produtosSeed.length} produtos (preço em centavos), ${cuponsSeed.length} cupons.`);
+  await closeDb();
 }
 
 main().catch(async (err) => {
   console.error(err);
   try {
-    await getPool().end();
+    await closeDb();
   } catch {
     // ignore
   }

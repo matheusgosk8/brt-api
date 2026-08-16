@@ -1,0 +1,256 @@
+{
+  "id": "ff8fcd1d-b945-48b8-8e19-e33a052d527d",
+  "prevId": "07e6ff37-82cb-4926-84ff-2518769c7137",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.produtos": {
+      "name": "produtos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "descricao_produto": {
+          "name": "descricao_produto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade_estoque": {
+          "name": "quantidade_estoque",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preco_liquido": {
+          "name": "preco_liquido",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cupons": {
+      "name": "cupons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codigo_cupom": {
+          "name": "codigo_cupom",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "percentual_desconto": {
+          "name": "percentual_desconto",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cupons_codigo_cupom_unique": {
+          "name": "cupons_codigo_cupom_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codigo_cupom"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.carrinhos": {
+      "name": "carrinhos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "status": {
+          "name": "status",
+          "type": "carrinho_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ABERTO'"
+        },
+        "cupom_id": {
+          "name": "cupom_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "carrinhos_cupom_id_cupons_id_fk": {
+          "name": "carrinhos_cupom_id_cupons_id_fk",
+          "tableFrom": "carrinhos",
+          "tableTo": "cupons",
+          "columnsFrom": [
+            "cupom_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.itens_carrinho": {
+      "name": "itens_carrinho",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "carrinho_id": {
+          "name": "carrinho_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "produto_id": {
+          "name": "produto_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade": {
+          "name": "quantidade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "itens_carrinho_carrinho_id_carrinhos_id_fk": {
+          "name": "itens_carrinho_carrinho_id_carrinhos_id_fk",
+          "tableFrom": "itens_carrinho",
+          "tableTo": "carrinhos",
+          "columnsFrom": [
+            "carrinho_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "itens_carrinho_produto_id_produtos_id_fk": {
+          "name": "itens_carrinho_produto_id_produtos_id_fk",
+          "tableFrom": "itens_carrinho",
+          "tableTo": "produtos",
+          "columnsFrom": [
+            "produto_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "itens_carrinho_carrinho_produto_unique": {
+          "name": "itens_carrinho_carrinho_produto_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "carrinho_id",
+            "produto_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.carrinho_status": {
+      "name": "carrinho_status",
+      "schema": "public",
+      "values": [
+        "ABERTO",
+        "FINALIZADO"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

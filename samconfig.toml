@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.global.parameters]
+region = "sa-east-1"
+
+[default.deploy.parameters]
+stack_name = "brt-api"
+region = "sa-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+resolve_s3 = true
+# bundle webpack já em dist/ — não rodar sam build
+# profile fica no CLI: sam deploy --profile pessoal

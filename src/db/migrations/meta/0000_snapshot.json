@@ -1,9 +1,87 @@
 {
-  "id": "daa68d4e-7818-4a4d-a15b-e64d6e29a4ae",
+  "id": "07e6ff37-82cb-4926-84ff-2518769c7137",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.produtos": {
+      "name": "produtos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "descricao_produto": {
+          "name": "descricao_produto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade_estoque": {
+          "name": "quantidade_estoque",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preco_liquido": {
+          "name": "preco_liquido",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cupons": {
+      "name": "cupons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codigo_cupom": {
+          "name": "codigo_cupom",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "percentual_desconto": {
+          "name": "percentual_desconto",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cupons_codigo_cupom_unique": {
+          "name": "cupons_codigo_cupom_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codigo_cupom"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.carrinhos": {
       "name": "carrinhos",
       "schema": "",
@@ -62,46 +140,6 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.cupons": {
-      "name": "cupons",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "codigo_cupom": {
-          "name": "codigo_cupom",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "percentual_desconto": {
-          "name": "percentual_desconto",
-          "type": "numeric(5, 2)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cupons_codigo_cupom_unique": {
-          "name": "cupons_codigo_cupom_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "codigo_cupom"
-          ]
-        }
-      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -176,44 +214,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.produtos": {
-      "name": "produtos",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "descricao_produto": {
-          "name": "descricao_produto",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quantidade_estoque": {
-          "name": "quantidade_estoque",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "preco_liquido": {
-          "name": "preco_liquido",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

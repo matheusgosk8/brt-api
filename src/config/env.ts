@@ -15,5 +15,7 @@ export function getEnv() {
   return {
     databaseUrl: required('DATABASE_URL'),
     port: Number(process.env.PORT ?? 3001),
+    corsOrigin: process.env.CORS_ORIGIN ?? '*',
+    logLevel: (process.env.LOG_LEVEL ?? 'INFO').toUpperCase(),
   };
 }

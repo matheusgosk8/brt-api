@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: brt-api — Lambda + API Gateway (bundle webpack em dist/)
+
+Parameters:
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+    Description: Connection string Postgres (Neon pooled em prod)
+  CorsOrigin:
+    Type: String
+    Default: '*'
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues: [DEBUG, INFO, ERROR]
+  DbPoolMax:
+    Type: String
+    Default: '2'
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization'"
+      AllowOrigin: "'*'"
+
+Resources:
+  BrtApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/brt-api
+      RetentionInDays: 7
+
+  BrtApiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: BrtApiLogGroup
+    Properties:
+      FunctionName: brt-api
+      CodeUri: dist/
+      Handler: index.handler
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          CORS_ORIGIN: !Ref CorsOrigin
+          LOG_LEVEL: !Ref LogLevel
+          PORT: '3001'
+          DB_POOL_MAX: !Ref DbPoolMax
+      Events:
+        ProxyApi:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        RootApi:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: URL base do API Gateway
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'
+  FunctionName:
+    Value: !Ref BrtApiFunction
