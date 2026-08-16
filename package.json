@@ -1,0 +1,33 @@
+{
+  "name": "brt-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Api para teste técnico da brasil terrenos",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/local/server.ts",
+    "dev:once": "tsx src/local/server.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/scripts/migrate.ts",
+    "db:seed": "tsx src/scripts/seed.ts",
+    "db:setup": "npm run db:generate && npm run db:migrate && npm run db:seed"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.44.6",
+    "express": "^4.21.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.10",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
