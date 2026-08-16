@@ -13,8 +13,6 @@ permissions:
 env:
   AWS_REGION: sa-east-1
   FUNCTION_NAME: brt-api
-  # ARN de role não é segredo: sem o OIDC trust ninguém assume
-  AWS_ROLE_ARN: arn:aws:iam::891016044933:role/github-actions-brt-api
 
 jobs:
   build:
@@ -24,11 +22,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
-      # npm 10 (default do Node 20) resolve deps opcionais do unrs-resolver
-      # diferente do npm 11 que gerou o lock, e o npm ci falha
+      # lock gerado com npm 11 (Node 24 local); Node 22 ainda vem com npm 10
       - name: Pin npm
         run: npm i -g npm@11
 
@@ -65,7 +62,7 @@ jobs:
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload to S3 + update Lambda
