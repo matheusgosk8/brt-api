@@ -25,6 +25,11 @@ jobs:
           node-version: '20'
           cache: npm
 
+      # npm 10 (default do Node 20) resolve deps opcionais do unrs-resolver
+      # diferente do npm 11 que gerou o lock, e o npm ci falha
+      - name: Pin npm
+        run: npm i -g npm@11
+
       - name: Install
         run: npm ci
 
