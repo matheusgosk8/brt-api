@@ -28,5 +28,6 @@ export async function checkoutHandler(c: Context) {
     ctx: c,
     message: 'Checkout realizado',
     statusCode: 200,
+    data: result.right,
   });
 }

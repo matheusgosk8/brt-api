@@ -1,0 +1,656 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BRT API — Carrinho de Compras",
+    "description": "API do teste técnico (Brasil Terrenos). Valores monetários em **centavos** (integer). Envelope padrão: `{ statusCode, message, data, meta? }`. Erros usam o mesmo envelope com `data.code` (DomainErrorCode).",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local (Hono + node-server)"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Disponibilidade do serviço e do banco" },
+    { "name": "Produtos", "description": "Catálogo" },
+    { "name": "Carrinhos", "description": "Lifecycle, itens, cupom e checkout" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Serviço e banco OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthSuccess" },
+                "example": {
+                  "statusCode": 200,
+                  "message": "OK",
+                  "data": {
+                    "service": "brt-api",
+                    "database": "up",
+                    "port": 3001
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Banco indisponível",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos": {
+      "get": {
+        "tags": ["Produtos"],
+        "summary": "Listar produtos",
+        "operationId": "listProdutos",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/PerPage" },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Busca case/accent-insensitive em descricaoProduto (extensão unaccent)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProdutosListSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos (ex.: perPage > 100)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos": {
+      "get": {
+        "tags": ["Carrinhos"],
+        "summary": "Listar carrinhos (leve)",
+        "operationId": "listCarrinhos",
+        "parameters": [
+          { "$ref": "#/components/parameters/Page" },
+          { "$ref": "#/components/parameters/PerPage" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada sem itens/totais",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhosListSuccess" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Carrinhos"],
+        "summary": "Criar carrinho",
+        "description": "Cria carrinho com status `ABERTO`, sem itens e sem cupom. Sem body.",
+        "operationId": "createCarrinho",
+        "responses": {
+          "201": {
+            "description": "Carrinho criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos/{id}": {
+      "get": {
+        "tags": ["Carrinhos"],
+        "summary": "Buscar carrinho completo",
+        "operationId": "getCarrinho",
+        "parameters": [{ "$ref": "#/components/parameters/CarrinhoId" }],
+        "responses": {
+          "200": {
+            "description": "Carrinho com itens, cupom e totais",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Carrinho não encontrado",
+                  "data": { "code": "CART_NOT_FOUND" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos/{id}/itens": {
+      "post": {
+        "tags": ["Carrinhos"],
+        "summary": "Adicionar item (soma se já existir)",
+        "operationId": "addCarrinhoItem",
+        "parameters": [{ "$ref": "#/components/parameters/CarrinhoId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddItemBody" },
+              "example": {
+                "produtoId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "quantidade": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item adicionado; retorna carrinho completo",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validação / estoque / carrinho fechado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho ou produto não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos/{id}/itens/{produtoId}": {
+      "put": {
+        "tags": ["Carrinhos"],
+        "summary": "Atualizar quantidade (substitui)",
+        "description": "Define a quantidade exata. `quantidade: 0` remove a linha (mesmo efeito do DELETE).",
+        "operationId": "updateCarrinhoItem",
+        "parameters": [
+          { "$ref": "#/components/parameters/CarrinhoId" },
+          { "$ref": "#/components/parameters/ProdutoId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateItemBody" },
+              "example": { "quantidade": 3 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quantidade atualizada (ou linha removida se 0)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validação / estoque / carrinho fechado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho ou item não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Carrinhos"],
+        "summary": "Remover linha do item",
+        "description": "Remove o produto do carrinho por completo. Sem body.",
+        "operationId": "removeCarrinhoItem",
+        "parameters": [
+          { "$ref": "#/components/parameters/CarrinhoId" },
+          { "$ref": "#/components/parameters/ProdutoId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item removido; retorna carrinho completo",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Carrinho fechado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho ou item não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos/{id}/cupom": {
+      "post": {
+        "tags": ["Carrinhos"],
+        "summary": "Aplicar cupom",
+        "description": "Aplica pelo **código** (`10OFF`, `15OFF`). Um cupom ativo por vez — aplicar outro substitui o anterior.",
+        "operationId": "applyCupom",
+        "parameters": [{ "$ref": "#/components/parameters/CarrinhoId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApplyCupomBody" },
+              "example": { "codigoCupom": "10OFF" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cupom aplicado; totais recalculados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validação / carrinho fechado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho ou cupom não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Carrinhos"],
+        "summary": "Remover cupom",
+        "operationId": "removeCupom",
+        "parameters": [{ "$ref": "#/components/parameters/CarrinhoId" }],
+        "responses": {
+          "200": {
+            "description": "Cupom removido; totais recalculados",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Carrinho fechado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carrinhos/{id}/checkout": {
+      "post": {
+        "tags": ["Carrinhos"],
+        "summary": "Finalizar carrinho",
+        "description": "Altera status `ABERTO` → `FINALIZADO`. Não decrementa estoque (fora do escopo do desafio). Carrinho vazio ou já finalizado retorna erro.",
+        "operationId": "checkout",
+        "parameters": [{ "$ref": "#/components/parameters/CarrinhoId" }],
+        "responses": {
+          "200": {
+            "description": "Checkout realizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CarrinhoViewSuccess" }
+              }
+            }
+          },
+          "400": {
+            "description": "Vazio, já finalizado ou inválido",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" },
+                "examples": {
+                  "empty": {
+                    "value": {
+                      "statusCode": 400,
+                      "message": "Carrinho vazio",
+                      "data": { "code": "EMPTY_CART" }
+                    }
+                  },
+                  "already": {
+                    "value": {
+                      "statusCode": 400,
+                      "message": "Carrinho já finalizado",
+                      "data": { "code": "CART_ALREADY_FINALIZED" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Carrinho não encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "CarrinhoId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" },
+        "description": "ID do carrinho"
+      },
+      "ProdutoId": {
+        "name": "produtoId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" },
+        "description": "ID do produto"
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "integer", "minimum": 1, "default": 1 }
+      },
+      "PerPage": {
+        "name": "perPage",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 }
+      }
+    },
+    "schemas": {
+      "DomainErrorCode": {
+        "type": "string",
+        "enum": [
+          "INVALID_QUANTITY",
+          "INSUFFICIENT_STOCK",
+          "CART_CLOSED",
+          "CART_ALREADY_FINALIZED",
+          "EMPTY_CART",
+          "ITEM_NOT_FOUND",
+          "COUPON_NOT_FOUND",
+          "INVALID_CUPON",
+          "PRODUCT_NOT_FOUND",
+          "CART_NOT_FOUND",
+          "VALIDATION_ERROR",
+          "INTERNAL",
+          "BAD_REQUEST"
+        ]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["page", "perPage", "total", "totalPages"],
+        "properties": {
+          "page": { "type": "integer" },
+          "perPage": { "type": "integer" },
+          "total": { "type": "integer" },
+          "totalPages": { "type": "integer" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["statusCode", "message", "data"],
+        "properties": {
+          "statusCode": { "type": "integer" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "code": { "$ref": "#/components/schemas/DomainErrorCode" }
+            }
+          }
+        }
+      },
+      "Produto": {
+        "type": "object",
+        "required": ["id", "descricaoProduto", "quantidadeEstoque", "precoLiquido"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "descricaoProduto": { "type": "string" },
+          "quantidadeEstoque": { "type": "integer" },
+          "precoLiquido": {
+            "type": "integer",
+            "description": "Preço unitário em centavos"
+          }
+        }
+      },
+      "CarrinhoStatus": {
+        "type": "string",
+        "enum": ["ABERTO", "FINALIZADO"]
+      },
+      "CarrinhoLeve": {
+        "type": "object",
+        "required": ["id", "status", "cupomId", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "$ref": "#/components/schemas/CarrinhoStatus" },
+          "cupomId": { "type": "string", "format": "uuid", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CarrinhoCupom": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "codigoCupom": { "type": "string", "example": "10OFF" },
+          "percentualDesconto": { "type": "integer", "example": 10 }
+        }
+      },
+      "CarrinhoItemView": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "carrinhoId": { "type": "string", "format": "uuid" },
+          "produtoId": { "type": "string", "format": "uuid" },
+          "quantidade": { "type": "integer" },
+          "precoUnitario": {
+            "type": "integer",
+            "description": "Centavos"
+          },
+          "valorOriginal": {
+            "type": "integer",
+            "description": "Linha sem desconto (centavos)"
+          },
+          "valor": {
+            "type": "integer",
+            "description": "Linha com cupom (centavos)"
+          },
+          "produto": { "$ref": "#/components/schemas/Produto" }
+        }
+      },
+      "CarrinhoView": {
+        "type": "object",
+        "description": "Carrinho completo retornado pelo find e por todas as mutações",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "$ref": "#/components/schemas/CarrinhoStatus" },
+          "cupomId": { "type": "string", "format": "uuid", "nullable": true },
+          "cupom": { "$ref": "#/components/schemas/CarrinhoCupom" },
+          "itens": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CarrinhoItemView" }
+          },
+          "valorTotalOriginal": { "type": "integer" },
+          "desconto": { "type": "integer" },
+          "valorTotal": { "type": "integer" },
+          "subtotal": {
+            "type": "integer",
+            "description": "Alias do desafio (= valorTotalOriginal)"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Alias do desafio (= valorTotal)"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AddItemBody": {
+        "type": "object",
+        "required": ["produtoId", "quantidade"],
+        "properties": {
+          "produtoId": { "type": "string", "format": "uuid" },
+          "quantidade": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Somada se o produto já estiver no carrinho"
+          }
+        }
+      },
+      "UpdateItemBody": {
+        "type": "object",
+        "required": ["quantidade"],
+        "properties": {
+          "quantidade": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Substitui a qty atual; 0 remove a linha"
+          }
+        }
+      },
+      "ApplyCupomBody": {
+        "type": "object",
+        "required": ["codigoCupom"],
+        "properties": {
+          "codigoCupom": {
+            "type": "string",
+            "example": "10OFF",
+            "description": "Código do cupom (não o UUID)"
+          }
+        }
+      },
+      "HealthSuccess": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer", "example": 200 },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "service": { "type": "string" },
+              "database": { "type": "string", "enum": ["up", "down"] },
+              "port": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "ProdutosListSuccess": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer", "example": 200 },
+          "message": { "type": "string" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Produto" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "CarrinhosListSuccess": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer", "example": 200 },
+          "message": { "type": "string" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CarrinhoLeve" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "CarrinhoViewSuccess": {
+        "type": "object",
+        "properties": {
+          "statusCode": { "type": "integer" },
+          "message": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/CarrinhoView" }
+        }
+      }
+    }
+  }
+}

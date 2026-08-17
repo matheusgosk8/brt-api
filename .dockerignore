@@ -1,0 +1,30 @@
+# deps / build
+node_modules
+dist
+coverage
+*.zip
+function.zip
+
+# env & local
+.env
+.env.*
+!.env.example
+
+# tooling / noise
+.git
+.github
+.sam
+samconfig.toml
+template.yaml
+events
+env.sam.json
+*.md
+.eslintrc*
+eslint.config.*
+.prettierrc*
+.prettierignore
+docs/INFRAESTRUCTURE.MD
+
+# IDE
+.idea
+.vscode
