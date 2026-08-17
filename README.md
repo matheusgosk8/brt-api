@@ -217,7 +217,7 @@ Envelope de resposta (sucesso e erro):
 - Sem auth; CORS via `CORS_ORIGIN`.
 - **Estoque no checkout:** o `POST /carrinhos/:id/checkout` **não** decrementa `quantidadeEstoque` dos produtos. O desafio pede finalizar o carrinho (`ABERTO` → `FINALIZADO`) e validar estoque nas mutações de itens; **não** pede baixa de inventário na finalização. Por isso o checkout só altera o status — evita escopo extra (transaction, concorrência, inventário) fora do enunciado. Estoque continua sendo teto nas adições/atualizações de qty (`INSUFFICIENT_STOCK`).
 - **Lint/format:** ESLint 9 (flat) + Prettier — regras adaptadas de `prototipo/` (singleQuote, printWidth 120, `import/no-default-export`, etc.). Scripts: `npm run lint` / `npm run format`.
-- **OpenAPI:** spec estática em `src/docs/openapi.json` (spec-first), servida em `GET /openapi.json` e UI em `GET /docs` (Swagger UI via CDN). Entra no bundle webpack via import JSON — funciona local e na Lambda.
+- **OpenAPI:** spec estática em `src/docs/openapi.json`, UI em `GET /docs`. No `/docs` a spec vai **embutida no HTML** (Swagger usa `spec:`, não `url:`) — no API Gateway, fetch em `/openapi.json` sem o stage `/Prod` retorna 403; assim o Swagger não depende desse 2º request. `GET /openapi.json` continua disponível com o prefixo certo (`/Prod/openapi.json`).
 - **Docker:** imagem da API (`Dockerfile`) + serviço `api` no `docker-compose` da raiz. Deploy em prod continua sendo **zip → Lambda** (não imagem ECR); o container serve o diferencial local / parity de runtime.
 
 ## Anotações
