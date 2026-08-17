@@ -2,6 +2,13 @@
 
 API do teste técnico (carrinho de compras) — TypeScript + Hono + Drizzle ORM + PostgreSQL.
 
+## OpenApi docs
+
+Documentação da api disponível em:
+
+    #Local : http://localhost:3001/docs
+    #Production: https://goaf0062ae.execute-api.sa-east-1.amazonaws.com/Prod/docs
+
 ## Pré-requisitos
 
 Na máquina local:
